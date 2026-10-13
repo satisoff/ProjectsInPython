@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block body %}
+<h1>Student Details</h1>
+<nav><a href="{{ url_for('dashboard') }}">Back</a></nav>
+{% if error %}<p class="error">{{ error }}</p>{% endif %}
+{% if student %}
+<section class="card">
+  <p>SR No: {{ student.adm_no }}</p>
+  <p>Name: {{ student.st_name }}</p>
+  <p>Class: {{ student.class }}</p>
+  <p>Section: {{ student.sec }}</p>
+  <p>Contact: {{ student.cont_no }}</p>
+  <p>Submitted Month: {{ student.subm_month }}</p>
+  <p>Amount Submitted: {{ student.amt_submited }}</p>
+  <p>Last Payment Date: {{ student.date_paymnt or 'N/A' }}</p>
+</section>
+{% endif %}
+{% endblock %}

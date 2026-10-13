@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block body %}
+<h1>Add Student</h1>
+<nav><a href="{{ url_for('dashboard') }}">Back</a></nav>
+{% if error %}<p class="error">{{ error }}</p>{% endif %}
+{% if student %}<p class="success">Student added: {{ student.st_name }} ({{ student.adm_no }})</p>{% endif %}
+<form method="post" class="card">
+  <label>SR No. <input type="number" name="adm_no" min="1" required></label>
+  <label>Name <input type="text" name="st_name" required></label>
+  <label>Class <input type="number" name="class" min="1" max="12" required></label>
+  <label>Section <input type="text" name="sec" maxlength="1" required></label>
+  <label>Contact <input type="text" name="cont_no" pattern="\d{10}" required></label>
+  <button type="submit">Add Student</button>
+</form>
+{% endblock %}
