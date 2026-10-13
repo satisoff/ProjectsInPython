@@ -123,3 +123,55 @@ class FeeRepository:
             return cursor.rowcount > 0
         finally:
             conn.close()
+
+    def log_activity(
+        self,
+        action: str,
+        adm_no: int,
+        st_name: str | None,
+        amount: int | None = None,
+        detail: str | None = None,
+    ) -> None:
+        conn = get_connection(self.settings)
+        try:
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                INSERT INTO activity_log (action, adm_no, st_name, amount, detail)
+                VALUES (%s, %s, %s, %s, %s)
+                """,
+                (action, adm_no, st_name, amount, detail),
+            )
+            conn.commit()
+        finally:
+            conn.close()
+
+    def recent_activity(self, limit: int) -> list[dict[str, Any]]:
+        conn = get_connection(self.settings)
+        try:
+            cursor = conn.cursor()
+            # Age is computed by MySQL so it is correct whatever timezone the DB server uses.
+            cursor.execute(
+                """
+                SELECT action, adm_no, st_name, amount, detail, created_at,
+                       TIMESTAMPDIFF(SECOND, created_at, CURRENT_TIMESTAMP) AS age_seconds
+                FROM activity_log
+                ORDER BY id DESC
+                LIMIT %s
+                """,
+                (limit,),
+            )
+            return [
+                {
+                    "action": row[0],
+                    "adm_no": row[1],
+                    "st_name": row[2],
+                    "amount": row[3],
+                    "detail": row[4],
+                    "created_at": str(row[5]),
+                    "age_seconds": max(int(row[6] or 0), 0),
+                }
+                for row in cursor.fetchall()
+            ]
+        finally:
+            conn.close()

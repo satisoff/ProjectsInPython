@@ -1,14 +1,54 @@
 {% extends "base.html" %}
+{% from "_macros.html" import alert, back, money %}
+{% block title %}Collect fee{% endblock %}
 {% block body %}
-<h1>Submit Fee (SR No. {{ adm_no }})</h1>
-<nav><a href="{{ url_for('dashboard') }}">Back</a></nav>
-{% if error %}<p class="error">{{ error }}</p>{% endif %}
+<div class="page-header">
+  {{ back() }}
+  <h1>Collect fee</h1>
+  <p class="muted">SR No. {{ adm_no }}</p>
+</div>
+
+{% if error %}{{ alert(error) }}{% endif %}
+
 {% if result %}
-<p class="success">Fee submitted. Accepted: {{ result.accepted_amount }} | Refund: {{ result.refund_amount }}</p>
-<p>Now submitted till: {{ result.student.subm_month }} | Total: {{ result.student.amt_submited }}</p>
+<div class="card alert-success receipt" role="status">
+  <h2>Payment recorded</h2>
+  <div class="receipt-row"><span>Accepted</span><strong>{{ money(result.accepted_amount) }}</strong></div>
+  {% if result.refund_amount %}
+  <div class="receipt-row"><span>Return to payer</span><strong>{{ money(result.refund_amount) }}</strong></div>
+  {% endif %}
+  <div class="receipt-row"><span>Now paid till</span><strong>{{ result.student.subm_month }}</strong></div>
+  <div class="receipt-row"><span>Total paid this year</span><strong>{{ money(result.student.amt_submited) }}</strong></div>
+</div>
 {% endif %}
-<form method="post" class="card">
-  <label>Paid Amount <input type="number" name="paid_amount" min="1" required></label>
-  <button type="submit">Submit Fee</button>
-</form>
+
+<div class="fee-layout">
+  <form method="post" class="card">
+    <h2 class="card-title">Payment</h2>
+    <p class="card-subtitle">Amounts are rounded down to whole months; any extra is returned.</p>
+    <div class="form-grid">
+      <label class="field">
+        <span>Amount received</span>
+        <div class="input-prefix">
+          <b>₹</b>
+          <input type="number" name="paid_amount" min="1" inputmode="numeric" autofocus required>
+        </div>
+      </label>
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary">Record payment</button>
+      </div>
+    </div>
+  </form>
+
+  <aside class="card">
+    <h2 class="card-title">Monthly fee</h2>
+    <p class="card-subtitle">By class</p>
+    <table class="fee-table">
+      <tr><td>Class 1–5</td><td>{{ money(1000) }}</td></tr>
+      <tr><td>Class 6–8</td><td>{{ money(1700) }}</td></tr>
+      <tr><td>Class 9–10</td><td>{{ money(2500) }}</td></tr>
+      <tr><td>Class 11–12</td><td>{{ money(2970) }}</td></tr>
+    </table>
+  </aside>
+</div>
 {% endblock %}

@@ -1,18 +1,39 @@
 {% extends "base.html" %}
+{% from "_macros.html" import alert, back, money, paid_badge, initials %}
+{% block title %}Student details{% endblock %}
+{% block main_class %}container narrow{% endblock %}
 {% block body %}
-<h1>Student Details</h1>
-<nav><a href="{{ url_for('dashboard') }}">Back</a></nav>
-{% if error %}<p class="error">{{ error }}</p>{% endif %}
+<div class="page-header">
+  {{ back() }}
+  <h1>Student details</h1>
+</div>
+
+{% if error %}{{ alert(error) }}{% endif %}
+
 {% if student %}
 <section class="card">
-  <p>SR No: {{ student.adm_no }}</p>
-  <p>Name: {{ student.st_name }}</p>
-  <p>Class: {{ student.class }}</p>
-  <p>Section: {{ student.sec }}</p>
-  <p>Contact: {{ student.cont_no }}</p>
-  <p>Submitted Month: {{ student.subm_month }}</p>
-  <p>Amount Submitted: {{ student.amt_submited }}</p>
-  <p>Last Payment Date: {{ student.date_paymnt or 'N/A' }}</p>
+  <div class="student-head">
+    <div class="avatar">{{ initials(student.st_name) }}</div>
+    <div>
+      <h2>{{ student.st_name }}</h2>
+      <p class="muted">SR No. {{ student.adm_no }}</p>
+    </div>
+    {{ paid_badge(student) }}
+  </div>
+
+  <dl class="details">
+    <div><dt>Class</dt><dd>{{ student.class }}</dd></div>
+    <div><dt>Section</dt><dd>{{ student.sec }}</dd></div>
+    <div><dt>Contact number</dt><dd>{{ student.cont_no }}</dd></div>
+    <div><dt>Paid till</dt><dd>{{ student.subm_month if student.subm_month and student.subm_month != "None" else "—" }}</dd></div>
+    <div><dt>Total paid</dt><dd>{{ money(student.amt_submited) }}</dd></div>
+    <div><dt>Last payment date</dt><dd>{{ student.date_paymnt or "—" }}</dd></div>
+  </dl>
 </section>
+
+<div class="actions">
+  <a class="btn btn-primary" href="{{ url_for('submit_fee', adm_no=student.adm_no) }}">Collect fee</a>
+  <a class="btn btn-secondary" href="{{ url_for('update_student', adm_no=student.adm_no) }}">Edit</a>
+</div>
 {% endif %}
 {% endblock %}

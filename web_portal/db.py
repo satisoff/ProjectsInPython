@@ -19,6 +19,18 @@ CREATE TABLE IF NOT EXISTS fee_det (
 );
 """
 
+ACTIVITY_SCHEMA_SQL = """
+CREATE TABLE IF NOT EXISTS activity_log (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    action VARCHAR(20) NOT NULL,
+    adm_no INT NOT NULL,
+    st_name VARCHAR(50) NULL,
+    amount INT NULL,
+    detail VARCHAR(100) NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+"""
+
 
 def get_connection(settings: Settings, *, with_database: bool = True) -> MySQLConnection:
     connect_args = {
@@ -43,6 +55,7 @@ def init_database(settings: Settings) -> None:
         cursor.execute(f"CREATE DATABASE IF NOT EXISTS {settings.mysql_database}")
         cursor.execute(f"USE {settings.mysql_database}")
         cursor.execute(SCHEMA_SQL)
+        cursor.execute(ACTIVITY_SCHEMA_SQL)
         conn.commit()
     finally:
         conn.close()

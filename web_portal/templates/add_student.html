@@ -1,15 +1,50 @@
 {% extends "base.html" %}
+{% from "_macros.html" import alert, back %}
+{% block title %}Add student{% endblock %}
+{% block main_class %}container narrow{% endblock %}
 {% block body %}
-<h1>Add Student</h1>
-<nav><a href="{{ url_for('dashboard') }}">Back</a></nav>
-{% if error %}<p class="error">{{ error }}</p>{% endif %}
-{% if student %}<p class="success">Student added: {{ student.st_name }} ({{ student.adm_no }})</p>{% endif %}
+<div class="page-header">
+  {{ back() }}
+  <h1>Add student</h1>
+  <p class="muted">Create a new student record. Fees start at zero.</p>
+</div>
+
+{% if error %}{{ alert(error) }}{% endif %}
+{% if student %}
+<div class="alert alert-success" role="status">
+  Added {{ student.st_name }} (SR No. {{ student.adm_no }}).
+  <a href="{{ url_for('dashboard', adm_no=student.adm_no) }}">View record &rarr;</a>
+</div>
+{% endif %}
+
+{# Keep the entered values after a validation error so the form isn't wiped. #}
+{% set form = request.form if error else {} %}
 <form method="post" class="card">
-  <label>SR No. <input type="number" name="adm_no" min="1" required></label>
-  <label>Name <input type="text" name="st_name" required></label>
-  <label>Class <input type="number" name="class" min="1" max="12" required></label>
-  <label>Section <input type="text" name="sec" maxlength="1" required></label>
-  <label>Contact <input type="text" name="cont_no" pattern="\d{10}" required></label>
-  <button type="submit">Add Student</button>
+  <div class="form-grid two-col">
+    <label class="field">
+      <span>SR No.</span>
+      <input type="number" name="adm_no" min="1" value="{{ form.get('adm_no', '') }}" required>
+    </label>
+    <label class="field">
+      <span>Full name</span>
+      <input type="text" name="st_name" value="{{ form.get('st_name', '') }}" autocomplete="off" required>
+    </label>
+    <label class="field">
+      <span>Class <span class="hint">(1–12)</span></span>
+      <input type="number" name="class" min="1" max="12" value="{{ form.get('class', '') }}" required>
+    </label>
+    <label class="field">
+      <span>Section</span>
+      <input type="text" name="sec" maxlength="1" placeholder="A" value="{{ form.get('sec', '') }}" required>
+    </label>
+    <label class="field span-2">
+      <span>Contact number <span class="hint">(10 digits)</span></span>
+      <input type="tel" name="cont_no" pattern="\d{10}" inputmode="numeric" value="{{ form.get('cont_no', '') }}" required>
+    </label>
+  </div>
+  <div class="form-actions">
+    <a class="btn btn-secondary" href="{{ url_for('dashboard') }}">Cancel</a>
+    <button type="submit" class="btn btn-primary">Add student</button>
+  </div>
 </form>
 {% endblock %}
