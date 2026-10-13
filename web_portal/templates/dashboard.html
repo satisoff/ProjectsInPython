@@ -1,28 +1,103 @@
 {% extends "base.html" %}
+{% from "_macros.html" import alert, money, paid_badge, initials, ago %}
+{% block title %}Dashboard{% endblock %}
 {% block body %}
-<h1>Fee Department Dashboard</h1>
-<nav>
-  <a href="{{ url_for('add_student') }}">Add Student</a>
-  <a href="{{ url_for('logout') }}">Logout</a>
-</nav>
-{% if error %}<p class="error">{{ error }}</p>{% endif %}
-<form method="get" class="card">
-  <label>Search by SR No. <input type="number" name="adm_no" min="1" required></label>
-  <button type="submit">Find</button>
+{% set query = request.args.get("adm_no", "") %}
+<div class="page-header">
+  <h1>Dashboard</h1>
+  <p class="muted">Look up a student to view their fee status, collect fees or edit their record.</p>
+</div>
+
+{% if error %}{{ alert(error) }}{% endif %}
+
+<form method="get" action="{{ url_for('dashboard') }}" class="card">
+  <label class="field">
+    <span>Find a student</span>
+    <div class="search-row">
+      <div class="search-input">
+        <input type="search" name="adm_no" id="adm-search" inputmode="numeric" pattern="[0-9]+"
+               title="SR No. must be a number" placeholder="Enter SR No." value="{{ query }}" autocomplete="off" required>
+        <button type="button" class="search-clear" aria-label="Clear search" data-reset="{{ url_for('dashboard') if query else '' }}"
+                onclick="if (this.dataset.reset) { location.href = this.dataset.reset; } else { var i = document.getElementById('adm-search'); i.value = ''; i.focus(); }">&times;</button>
+      </div>
+      <button type="submit" class="btn btn-primary">Search</button>
+    </div>
+  </label>
 </form>
+
 {% if student %}
 <section class="card">
-  <h2>{{ student.st_name }} ({{ student.adm_no }})</h2>
-  <p>Class: {{ student.class }} {{ student.sec }}</p>
-  <p>Contact: {{ student.cont_no }}</p>
-  <p>Submitted: {{ student.amt_submited }} till {{ student.subm_month }}</p>
-  <p>Last Payment: {{ student.date_paymnt or 'N/A' }}</p>
-  <a href="{{ url_for('student_details', adm_no=student.adm_no) }}">Full Details</a>
-  <a href="{{ url_for('submit_fee', adm_no=student.adm_no) }}">Submit Fee</a>
-  <a href="{{ url_for('update_student', adm_no=student.adm_no) }}">Update</a>
-  <form method="post" action="{{ url_for('delete_student', adm_no=student.adm_no) }}" onsubmit="return confirm('Delete this student?');">
-    <button type="submit" class="danger">Delete</button>
-  </form>
+  <div class="student-head">
+    <div class="avatar">{{ initials(student.st_name) }}</div>
+    <div>
+      <h2>{{ student.st_name }}</h2>
+      <p class="muted">SR No. {{ student.adm_no }} · Class {{ student.class }}-{{ student.sec }}</p>
+    </div>
+    {{ paid_badge(student) }}
+  </div>
+
+  <dl class="stats">
+    <div><dt>Total paid</dt><dd>{{ money(student.amt_submited) }}</dd></div>
+    <div><dt>Paid till</dt><dd>{{ student.subm_month if student.subm_month and student.subm_month != "None" else "—" }}</dd></div>
+    <div><dt>Last payment</dt><dd>{{ student.date_paymnt or "—" }}</dd></div>
+    <div><dt>Contact</dt><dd>{{ student.cont_no }}</dd></div>
+  </dl>
+
+  <div class="actions">
+    <a class="btn btn-primary" href="{{ url_for('submit_fee', adm_no=student.adm_no) }}">Collect fee</a>
+    <a class="btn btn-secondary" href="{{ url_for('student_details', adm_no=student.adm_no) }}">View details</a>
+    <a class="btn btn-secondary" href="{{ url_for('update_student', adm_no=student.adm_no) }}">Edit</a>
+    <form method="post" action="{{ url_for('delete_student', adm_no=student.adm_no) }}"
+          onsubmit="return confirm('Delete student {{ student.adm_no }}? This cannot be undone.');">
+      <button type="submit" class="btn btn-danger">Delete</button>
+    </form>
+  </div>
+</section>
+{% elif query %}
+<section class="card empty">
+  <div class="empty-icon">?</div>
+  <h2>No student found</h2>
+  <p class="muted">There is no student with SR No. {{ query }}.</p>
+  <a class="btn btn-secondary" href="{{ url_for('add_student') }}">Add a new student</a>
 </section>
 {% endif %}
+
+<section class="card activity">
+  <h2 class="card-title">Recent activity</h2>
+  <p class="card-subtitle">The latest changes made in the portal.</p>
+  {% if activity %}
+  <ul class="activity-list">
+    {% for item in activity %}
+    {% set who = (item.st_name or "Unknown student") ~ " · SR " ~ item.adm_no %}
+    <li>
+      {% if item.action != "deleted" %}<a class="activity-row" href="{{ url_for('dashboard', adm_no=item.adm_no) }}">{% else %}<div class="activity-row">{% endif %}
+        {% if item.action == "fee" %}
+          <span class="activity-icon tone-success">₹</span>
+          <span class="activity-text"><strong>Fee collected · {{ money(item.amount) }}</strong><span class="muted">{{ who }} · paid till {{ item.detail }}</span></span>
+        {% elif item.action == "added" %}
+          <span class="activity-icon tone-info">+</span>
+          <span class="activity-text"><strong>Student added</strong><span class="muted">{{ who }} · class {{ item.detail }}</span></span>
+        {% elif item.action == "updated" %}
+          <span class="activity-icon tone-neutral">&#9998;</span>
+          <span class="activity-text"><strong>Details updated</strong><span class="muted">{{ who }} · changed {{ item.detail }}</span></span>
+        {% else %}
+          <span class="activity-icon tone-danger">&times;</span>
+          <span class="activity-text"><strong>Student deleted</strong><span class="muted">{{ who }}</span></span>
+        {% endif %}
+        <span class="activity-time muted">{{ ago(item.age_seconds, item.created_at) }}</span>
+      {% if item.action != "deleted" %}</a>{% else %}</div>{% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <div class="empty">
+    <div class="empty-icon">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+    </div>
+    <h2>No activity yet</h2>
+    <p class="muted">Fees collected and student changes will show up here.</p>
+    <a class="btn btn-secondary" href="{{ url_for('add_student') }}">Add a student</a>
+  </div>
+  {% endif %}
+</section>
 {% endblock %}

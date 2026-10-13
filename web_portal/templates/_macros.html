@@ -1,0 +1,42 @@
+{% macro alert(message, kind="error") -%}
+{%- set text = message
+    | replace("adm_no", "SR No.")
+    | replace("st_name", "name")
+    | replace("cont_no", "contact number")
+    | replace("paid_amount", "amount")
+    | replace("sec must", "section must") -%}
+<div class="alert alert-{{ kind }}" role="{{ 'alert' if kind == 'error' else 'status' }}">{{ text[:1] | upper }}{{ text[1:] }}</div>
+{%- endmacro %}
+
+{% macro back(label="Back to dashboard", href=None) -%}
+<a class="back-link" href="{{ href or url_for('dashboard') }}">&larr; {{ label }}</a>
+{%- endmacro %}
+
+{% macro money(value) -%}
+₹{{ "{:,}".format(value or 0) }}
+{%- endmacro %}
+
+{% macro paid_badge(student) -%}
+{%- if not student.subm_month or student.subm_month == "None" -%}
+<span class="badge badge-warning">No payments yet</span>
+{%- elif student.subm_month == "March" -%}
+<span class="badge badge-success">Paid for full year</span>
+{%- else -%}
+<span class="badge badge-info">Paid till {{ student.subm_month }}</span>
+{%- endif -%}
+{%- endmacro %}
+
+{% macro ago(seconds, timestamp) -%}
+<time datetime="{{ timestamp }}" title="{{ timestamp }}">
+{%- if seconds < 60 -%}Just now
+{%- elif seconds < 3600 -%}{{ seconds // 60 }} min ago
+{%- elif seconds < 86400 -%}{{ seconds // 3600 }} h ago
+{%- elif seconds < 7 * 86400 -%}{{ seconds // 86400 }} d ago
+{%- else -%}{{ timestamp[:10] }}
+{%- endif -%}
+</time>
+{%- endmacro %}
+
+{% macro initials(name) -%}
+{{ (name.split()[:2]) | map("first") | join | upper }}
+{%- endmacro %}

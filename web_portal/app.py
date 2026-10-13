@@ -73,7 +73,7 @@ def create_app() -> Flask:
         student = None
         if adm_no and adm_no.isdigit():
             student = service.get_student(int(adm_no))
-        return render_template("dashboard.html", student=student)
+        return render_template("dashboard.html", student=student, activity=service.recent_activity())
 
     @app.route("/students/add", methods=["GET", "POST"])
     @login_required
@@ -143,7 +143,9 @@ def create_app() -> Flask:
     def delete_student(adm_no: int):
         deleted = service.delete_student(adm_no)
         if not deleted:
-            return render_template("dashboard.html", student=None, error="Student not found")
+            return render_template(
+                "dashboard.html", student=None, error="Student not found", activity=service.recent_activity()
+            )
         return redirect(url_for("dashboard"))
 
     @app.post("/api/login")

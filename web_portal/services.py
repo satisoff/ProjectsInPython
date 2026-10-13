@@ -1,9 +1,15 @@
 from __future__ import annotations
 
+import logging
 from datetime import date
 from typing import Any
 
 from .repository import FeeRepository
+
+
+logger = logging.getLogger(__name__)
+
+FIELD_LABELS = {"st_name": "name", "class": "class", "sec": "section", "cont_no": "contact"}
 
 
 class ValidationError(ValueError):
@@ -93,22 +99,46 @@ class FeeService:
         if existing:
             raise ValidationError("adm_no already exists")
         self.repository.create_student(cleaned)
+        self._record("added", cleaned["adm_no"], cleaned["st_name"], detail=f"{cleaned['class']}-{cleaned['sec']}")
         return self.repository.get_student(cleaned["adm_no"])
 
     def get_student(self, adm_no: int) -> dict[str, Any] | None:
         return self.repository.get_student(adm_no)
 
     def update_student(self, adm_no: int, payload: dict[str, Any]) -> dict[str, Any]:
-        if not self.repository.get_student(adm_no):
+        before = self.repository.get_student(adm_no)
+        if not before:
             raise ValidationError("student not found")
         cleaned = self.validate_student_payload(payload, updating=True)
         if not cleaned:
             raise ValidationError("no valid fields provided for update")
         self.repository.update_student(adm_no, cleaned)
-        return self.repository.get_student(adm_no)
+        after = self.repository.get_student(adm_no)
+        changed = [FIELD_LABELS[key] for key in cleaned if before.get(key) != after.get(key)]
+        if changed:
+            self._record("updated", adm_no, after["st_name"], detail=", ".join(changed))
+        return after
 
     def delete_student(self, adm_no: int) -> bool:
-        return self.repository.delete_student(adm_no)
+        student = self.repository.get_student(adm_no)
+        deleted = self.repository.delete_student(adm_no)
+        if deleted:
+            self._record("deleted", adm_no, student["st_name"] if student else None)
+        return deleted
+
+    def recent_activity(self, limit: int = 8) -> list[dict[str, Any]]:
+        try:
+            return self.repository.recent_activity(limit)
+        except Exception:
+            logger.exception("Failed to load recent activity")
+            return []
+
+    def _record(self, action: str, adm_no: int, st_name: str | None, *, amount: int | None = None, detail: str | None = None) -> None:
+        # The main change is already committed; a logging failure must not turn it into an error for the user.
+        try:
+            self.repository.log_activity(action, adm_no, st_name, amount, detail)
+        except Exception:
+            logger.exception("Failed to record %s activity for %s", action, adm_no)
 
     def submit_fee(self, adm_no: int, paid_amount: int) -> dict[str, Any]:
         student = self.repository.get_student(adm_no)
@@ -136,6 +166,7 @@ class FeeService:
         if not updated:
             raise ValidationError("unable to submit fee")
 
+        self._record("fee", adm_no, student["st_name"], amount=adjusted_paid, detail=month)
         return {
             "student": self.repository.get_student(adm_no),
             "monthly_fee": monthly_fee,
