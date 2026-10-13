@@ -167,8 +167,8 @@ def create_app() -> Flask:
         payload = request.get_json(silent=True) or {}
         try:
             return jsonify(service.add_student(payload)), 201
-        except ValidationError as exc:
-            return jsonify({"error": str(exc)}), 400
+        except ValidationError:
+            return jsonify({"error": "invalid request data"}), 400
         except Exception:
             app.logger.exception("Failed to add student via API")
             return jsonify({"error": "internal server error"}), 500
@@ -191,8 +191,8 @@ def create_app() -> Flask:
         payload = request.get_json(silent=True) or {}
         try:
             return jsonify(service.update_student(adm_no, payload))
-        except ValidationError as exc:
-            return jsonify({"error": str(exc)}), 400
+        except ValidationError:
+            return jsonify({"error": "invalid request data"}), 400
         except Exception:
             app.logger.exception("Failed to update student via API")
             return jsonify({"error": "internal server error"}), 500
@@ -216,8 +216,8 @@ def create_app() -> Flask:
         try:
             paid_amount = int(payload.get("paid_amount"))
             return jsonify(service.submit_fee(adm_no, paid_amount))
-        except (ValidationError, ValueError) as exc:
-            return jsonify({"error": str(exc)}), 400
+        except (ValidationError, ValueError):
+            return jsonify({"error": "invalid request data"}), 400
         except Exception:
             app.logger.exception("Failed to submit fee via API")
             return jsonify({"error": "internal server error"}), 500
