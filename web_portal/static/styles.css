@@ -1,0 +1,10 @@
+body { font-family: Arial, sans-serif; background: #f5f6f8; margin: 0; }
+.container { max-width: 720px; margin: 30px auto; padding: 0 16px; }
+.card { background: #fff; padding: 16px; border-radius: 8px; margin: 12px 0; display: grid; gap: 10px; }
+label { display: grid; gap: 6px; }
+input, button { padding: 8px; font-size: 14px; }
+button { cursor: pointer; }
+.error { color: #b10000; }
+.success { color: #0a6e0a; }
+nav { display: flex; gap: 12px; margin-bottom: 10px; }
+.danger { background: #d9534f; color: #fff; border: none; }

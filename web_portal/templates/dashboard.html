@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block body %}
+<h1>Fee Department Dashboard</h1>
+<nav>
+  <a href="{{ url_for('add_student') }}">Add Student</a>
+  <a href="{{ url_for('logout') }}">Logout</a>
+</nav>
+{% if error %}<p class="error">{{ error }}</p>{% endif %}
+<form method="get" class="card">
+  <label>Search by SR No. <input type="number" name="adm_no" min="1" required></label>
+  <button type="submit">Find</button>
+</form>
+{% if student %}
+<section class="card">
+  <h2>{{ student.st_name }} ({{ student.adm_no }})</h2>
+  <p>Class: {{ student.class }} {{ student.sec }}</p>
+  <p>Contact: {{ student.cont_no }}</p>
+  <p>Submitted: {{ student.amt_submited }} till {{ student.subm_month }}</p>
+  <p>Last Payment: {{ student.date_paymnt or 'N/A' }}</p>
+  <a href="{{ url_for('student_details', adm_no=student.adm_no) }}">Full Details</a>
+  <a href="{{ url_for('submit_fee', adm_no=student.adm_no) }}">Submit Fee</a>
+  <a href="{{ url_for('update_student', adm_no=student.adm_no) }}">Update</a>
+  <form method="post" action="{{ url_for('delete_student', adm_no=student.adm_no) }}" onsubmit="return confirm('Delete this student?');">
+    <button type="submit" class="danger">Delete</button>
+  </form>
+</section>
+{% endif %}
+{% endblock %}

@@ -30,6 +30,8 @@ The application provides an easy-to-use interface for:
 - **MySQL** – Database management
 - **MySQL Connector**
 - **PyInstaller** (used for packaging the application)
+- **Flask + Jinja2** – Web portal and API
+- **Flask-CORS** – API CORS support
 
 ---
 
@@ -52,6 +54,46 @@ The application provides an easy-to-use interface for:
 
 ## 📷 Output
 - Application outputs and execution results are provided as screenshots inside the project folder.
+
+---
+
+## 🌐 Web Portal (New)
+
+The project now includes a web-ready implementation while keeping the original Tkinter desktop app intact.
+
+### Architecture Split
+- **UI Layer (Desktop):** `/home/runner/work/ProjectsInPython/ProjectsInPython/Main/Fee_Dep.py.py`
+- **Database Access Layer:** `/home/runner/work/ProjectsInPython/ProjectsInPython/web_portal/repository.py`
+- **Business Rules Layer:** `/home/runner/work/ProjectsInPython/ProjectsInPython/web_portal/services.py`
+- **Web/API Layer:** `/home/runner/work/ProjectsInPython/ProjectsInPython/web_portal/app.py`
+
+### Features Exposed on Web
+- Login/Auth
+- Add student
+- Submit fee
+- Get details
+- Update student
+- Delete student
+
+### Online MySQL Support
+Database credentials are now environment-driven (`.env.example`) for managed online MySQL providers.
+
+### Local Run (Web)
+1. Install dependencies:
+   - `pip install -r requirements.txt`
+2. Copy environment file:
+   - `cp .env.example .env`
+3. Configure online/local MySQL values in `.env`
+4. Initialize schema:
+   - `python scripts/init_db.py`
+5. Start web app:
+   - `python wsgi.py`
+
+### Deployment
+- **Recommended:** Render / Railway (persistent Python service)
+  - Render config included: `/home/runner/work/ProjectsInPython/ProjectsInPython/render.yaml`
+- **Optional Vercel setup:** `/home/runner/work/ProjectsInPython/ProjectsInPython/vercel.json`
+  - For production, prefer hosting API on Render/Railway and connect Vercel frontend to it.
 
 ---
 
